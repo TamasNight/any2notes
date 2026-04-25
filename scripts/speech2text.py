@@ -22,7 +22,9 @@ if __name__ == "__main__":
     segments = model.transcribe(input_file, language=language, beam_size=beam_size)
     lines = []
     for segment in segments["segments"]:
-        lines.append(f"[{segment["start"]:.2f}s] {segment["text"]}")
+        _s = segment["start"]
+        _t = segment["text"]
+        lines.append(f"[{_s:.2f}s] {_t}")
     end_time = time()
     print("Done.")
     output_path.write_text("\n".join(lines), encoding="utf-8")
