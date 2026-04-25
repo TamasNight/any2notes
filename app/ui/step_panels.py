@@ -705,7 +705,7 @@ class Step3Panel(QWidget):
         self._btn_run.setEnabled(False)
         self._btn_stop.setEnabled(True)
         self._log.append_info(f"▶ Avvio md2doc.py → {fmt}…")
-        self._runner.run("md2doc.py", [self._selected_input_path, "-f", fmt])
+        self._runner.run("md2doc.py", [self._selected_input_path, "-f", fmt, "-o", str(out_file)])
 
     def _on_finished(self, exit_code: int):
         self._btn_run.setEnabled(True)

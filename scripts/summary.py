@@ -53,10 +53,10 @@ def summarize(text: str, model, max_chunk, save_parts, part_path) -> str:
 
     if save_parts:
         path = Path(part_path)
-        parts_path = Path(path.stem)
+        parts_path = path.parent / Path(path.stem)
         parts_path.mkdir(parents=True, exist_ok=True)
         for i, summary in enumerate(summaries):
-            (parts_path / f"part_{i}.md").write_text(summary)
+            (parts_path / f"part_{i}.md").write_text(summary, encoding="utf-8")
         print(f"Salvataggio riassunti in {parts_path}")
 
     print("Unificazione chunk")
@@ -92,8 +92,8 @@ if __name__ == "__main__":
     texts = "\n".join(text_to_summarize)
     print(f"Loaded text to summarize.")
     summarized_text = summarize(texts, args.model, args.chunk_size, args.parts, args.output)
-    print(f"Summary generated. Writing to {args.ouput}...")
-    output_path = Path(args.ouput)
+    print(f"Summary generated. Writing to {args.output}...")
+    output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(summarized_text, encoding="utf-8")
     print("Done.")

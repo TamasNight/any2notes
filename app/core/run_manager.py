@@ -166,8 +166,6 @@ class RunManager:
             for v in versions:
                 if v["v"] == overwrite_version:
                     old_file = self.run_dir / step_id / v["file"]
-                    if old_file.exists():
-                        old_file.unlink()
                     v["file"] = filename
                     v["params"] = params
                     v["ts"] = _now()

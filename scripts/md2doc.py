@@ -3,14 +3,13 @@ import os
 import pypandoc
 from pathlib import Path
 
-def convert_md(input_files, output_format):
+def convert_md(input_files, output_format, output_file):
     # Mapping per le estensioni corrette
     ext_mapping = {
         'docx': '.docx',
         'pdf': '.pdf'
     }
-
-    target_ext = ext_mapping.get(output_format)
+    output_path = Path(output_file)
 
     for file_path in input_files:
         path = Path(file_path)
@@ -24,14 +23,11 @@ def convert_md(input_files, output_format):
             print(f"Salto {file_path}: Non è un file Markdown.")
             continue
 
-        # Definisco il percorso di output (stessa cartella, stessa base, nuova estensione)
-        output_file = path.with_suffix(target_ext)
-
         try:
-            print(f"Conversione in corso: {path.name} -> {output_file.name}...")
+            print(f"Conversione in corso: {path.name} -> {output_path.name}...")
 
             # Conversione effettiva
-            pypandoc.convert_file(str(path), output_format, outputfile=str(output_file))
+            pypandoc.convert_file(str(path), output_format, outputfile=str(output_path))
 
             print(f"Successo! File salvato in: {output_file}")
         except Exception as e:
@@ -46,10 +42,10 @@ def main():
     # Argomento opzionale per il formato (default: docx)
     parser.add_argument('-f', '--format', choices=['docx', 'pdf'], default='docx',
                         help="Formato di output: 'docx' (default) o 'pdf'")
-
+    parser.add_argument('-o', '--output', help="File di output")
     args = parser.parse_args()
 
-    convert_md(args.files, args.format)
+    convert_md(args.files, args.format, args.output)
 
 if __name__ == "__main__":
     main()
