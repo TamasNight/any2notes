@@ -1,0 +1,13 @@
+# any2notes — dipendenze UI
+PyQt6>=6.7.0
+
+faster-whisper
+pypandoc
+openai-whisper
+torch
+ollama
+pdfplumber
+pillow
+python-pptx
+pypdf
+tqdm
