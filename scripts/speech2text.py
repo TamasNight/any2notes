@@ -1,6 +1,5 @@
 import sys
 import whisper
-import torch
 from pathlib import Path
 from time import time
 
@@ -17,8 +16,7 @@ if __name__ == "__main__":
         sys.exit(1)
     output_path = Path(output_file)
     print(f"Loading model {model_name}...")
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = whisper.load_model(model_name, device=device)
+    model = whisper.load_model(model_name)
     start_time = time()
     print("Starting...")
     segments = model.transcribe(input_file, language=language, beam_size=beam_size)

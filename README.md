@@ -83,7 +83,7 @@ python -m venv .venv
 pip install PyQt6
 
 # Installa le dipendenze degli script (vedi sezione sotto)
-pip install faster-whisper openai-whisper python-pptx python-docx ollama tqdm
+pip install faster-whisper openai-whisper python-pptx python-docx ollama
 ```
 
 ### Avvio in sviluppo

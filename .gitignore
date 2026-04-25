@@ -4,3 +4,4 @@ runs/
 .venv/
 settings.json
 benchmark/
+models/

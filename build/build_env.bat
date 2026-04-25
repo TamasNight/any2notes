@@ -82,10 +82,11 @@ echo       (PyQt6, faster-whisper, openai-whisper, python-pptx, ecc.)
     faster-whisper ^
     openai-whisper ^
     python-pptx ^
-    python-docx ^
     ollama ^
-    httpx ^
-    tqdm ^
+    pypandoc ^
+    pdfplumber ^
+    pypdf ^
+    pillow ^
     --target "%PYENV%\Lib\site-packages" ^
     --upgrade
 

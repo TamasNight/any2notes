@@ -1,14 +1,9 @@
 import argparse
-import os
 import pypandoc
 from pathlib import Path
 
 def convert_md(input_files, output_format, output_file):
     # Mapping per le estensioni corrette
-    ext_mapping = {
-        'docx': '.docx',
-        'pdf': '.pdf'
-    }
     output_path = Path(output_file)
 
     for file_path in input_files:

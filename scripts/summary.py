@@ -1,5 +1,4 @@
 import argparse
-from tqdm import tqdm
 import sys
 import ollama
 from pathlib import Path
@@ -40,8 +39,8 @@ def chunk_text(text: str, max_chars: int) -> list[str]:
 def summarize(text: str, model, max_chunk, save_parts, part_path) -> str:
     chunks = chunk_text(text, max_chunk)
     summaries = []
-    for i, chunk in tqdm(enumerate(chunks), total=len(chunks), desc="Riassunto chunk"):
-        # print(f"  Riassunto chunk {i+1}/{len(chunks)}...")
+    for i, chunk in enumerate(chunks):
+        print(f"  Riassunto chunk {i+1}/{len(chunks)}...")
         response = ollama.chat(model=model, messages=[
             {"role": "user", "content": PROMPT_TEMPLATE.format(chunk=chunk)}
         ])
