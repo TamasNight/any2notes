@@ -8,7 +8,11 @@ from pathlib import Path
 from PyQt6.QtCore import QObject, QProcess, pyqtSignal
 from app.core import settings as app_settings
 
-SCRIPTS_DIR = Path(__file__).parent.parent.parent / "scripts"
+import sys
+if getattr(sys, 'frozen', False):
+    SCRIPTS_DIR = Path(sys.executable).parent / "scripts"
+else:
+    SCRIPTS_DIR = Path(__file__).parent.parent.parent / "scripts"
 
 
 def _python() -> str:

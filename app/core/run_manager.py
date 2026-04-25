@@ -9,8 +9,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-
-RUNS_DIR = Path(__file__).parent.parent.parent / "runs"
+import sys
+if getattr(sys, 'frozen', False):
+    RUNS_DIR = Path(sys.executable).parent / "runs"
+else:
+    RUNS_DIR = Path(__file__).parent.parent.parent / "runs"
 
 STEP_IDS = ["step1_transcribe", "step2_summarize", "step3_export"]
 

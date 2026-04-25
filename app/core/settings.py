@@ -6,8 +6,12 @@ Evita di importare SettingsPanel (UI) dal layer core.
 
 from pathlib import Path
 import json
+import sys
 
-SETTINGS_FILE = Path(__file__).parent.parent.parent / "settings.json"
+if getattr(sys, 'frozen', False):
+    SETTINGS_FILE = Path(sys.executable).parent / "settings.json"
+else:
+    SETTINGS_FILE = Path(__file__).parent.parent.parent / "settings.json"
 
 DEFAULTS = {
     "python_path": "",
@@ -45,14 +49,17 @@ def reload():
 
 def python_executable() -> str:
     """Ritorna il path Python da usare per lanciare gli script."""
-    import sys
+    # Python embeddable accanto al launcher
     cfg = get().get("python_path", "").strip()
     if cfg and Path(cfg).exists():
         return cfg
-    # Python embeddable accanto al launcher
-    embedded = Path(__file__).parent.parent.parent / "python" / "python.exe"
-    if embedded.exists():
-        return str(embedded)
+
+    import sys
+    if getattr(sys, 'frozen', False):
+        embedded = Path(sys.executable).parent / "python" / "python.exe"
+        if embedded.exists():
+            return str(embedded)
+
     return sys.executable
 
 
@@ -61,10 +68,6 @@ def pandoc_executable() -> str:
     cfg = get().get("pandoc_path", "").strip()
     if cfg and Path(cfg).exists():
         return cfg
-    # Bundlato in bin/
-    bundled = Path(__file__).parent.parent.parent / "bin" / "pandoc.exe"
-    if bundled.exists():
-        return str(bundled)
     return "pandoc"  # si fida del PATH di sistema
 
 

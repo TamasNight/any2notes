@@ -6,17 +6,20 @@ Le impostazioni vengono salvate in settings.json nella root dell'app.
 
 import json
 from pathlib import Path
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QCheckBox, QFileDialog, QMessageBox, QSpinBox,
     QComboBox, QGroupBox,
 )
+import sys
 
-SETTINGS_FILE = Path(__file__).parent.parent.parent / "settings.json"
+if getattr(sys, 'frozen', False):
+    SETTINGS_FILE = Path(sys.executable).parent / "settings.json"
+else:
+    SETTINGS_FILE = Path(__file__).parent.parent.parent / "settings.json"
 
 DEFAULTS = {
-    "python_path": "",           # vuoto = usa sys.executable
+    "python_path": "C:/Program Files/any2notes/python/python.exe",           # vuoto = usa sys.executable
     "pandoc_path": "",           # vuoto = cerca in PATH / bin/
     "default_model_whisper": "turbo",
     "default_language": "it",
@@ -208,8 +211,8 @@ class SettingsPanel(QWidget):
 
     def _populate(self):
         s = self._settings
-        self._python_edit.setText(s.get("python_path", ""))
-        self._pandoc_edit.setText(s.get("pandoc_path", ""))
+        self._python_edit.setText(s.get("python_path", DEFAULTS["python_path"]))
+        self._pandoc_edit.setText(s.get("pandoc_path", DEFAULTS["pandoc_path"]))
         self._ollama_host_edit.setText(s.get("ollama_host", DEFAULTS["ollama_host"]))
         idx = self._wmodel_combo.findText(s.get("default_model_whisper", "turbo"))
         if idx >= 0:

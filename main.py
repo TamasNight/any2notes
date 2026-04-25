@@ -6,7 +6,10 @@ import sys
 from pathlib import Path
 
 # Assicura che il root del progetto sia nel path
-ROOT = Path(__file__).parent
+if getattr(sys, 'frozen', False):
+    ROOT = Path(sys.executable).parent
+else:
+    ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 
 from PyQt6.QtWidgets import QApplication

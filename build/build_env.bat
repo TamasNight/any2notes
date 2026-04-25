@@ -102,13 +102,25 @@ echo [5/5] Compilazione launcher.exe...
 REM Assicurati che PyInstaller sia installato nel Python di sistema
 python -m pip install pyinstaller --quiet
 
-python -m PyInstaller ^
+setlocal
+set ROOT=%~dp0..
+set BUILD_OUT=%ROOT%\build\output
+
+pyinstaller ^
+    --noconfirm ^
     --onefile ^
     --windowed ^
     --name launcher ^
-    --distpath "%BUILD%output" ^
-    --workpath "%BUILD%pyinstaller_work" ^
-    --specpath "%BUILD%" ^
+    --distpath "%BUILD_OUT%" ^
+    --workpath "%ROOT%\build\pyinstaller_tmp" ^
+    --add-data "%ROOT%\app:app" ^
+    --add-data "%ROOT%\app\ui\style.qss:app/ui" ^
+    --add-data "%ROOT%\scripts:scripts" ^
+    --add-data "%ROOT%\assets:assets" ^
+    --hidden-import PyQt6.QtCore ^
+    --hidden-import PyQt6.QtGui ^
+    --hidden-import PyQt6.QtWidgets ^
+    --collect-all PyQt6 ^
     "%ROOT%\main.py"
 
 if errorlevel 1 (
@@ -123,9 +135,8 @@ echo  Output: build\output\launcher.exe
 echo  Env:    build\python_env\
 echo.
 echo  Prossimi passi:
-echo    1. Copia pandoc.exe in build\bin\pandoc.exe
-echo    2. Apri installer\any2notes.iss con Inno Setup Compiler
-echo    3. Compila per ottenere dist\any2notes-setup-0.1.0.exe
+echo    1. Apri installer\any2notes.iss con Inno Setup Compiler
+echo    2. Compila per ottenere dist\any2notes-setup-0.1.0.exe
 echo ============================================================
 echo.
 

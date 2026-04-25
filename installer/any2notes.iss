@@ -58,9 +58,6 @@ Source: "..\scripts\*"; DestDir: "{app}\scripts"; Flags: ignoreversion recursesu
 ; Python embeddable (preparato da build_env.bat)
 Source: "..\build\python_env\*"; DestDir: "{app}\python"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Pandoc bundlato
-Source: "..\build\bin\pandoc.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
-
 ; Assets
 Source: "..\assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.psd"
 
@@ -108,19 +105,60 @@ begin
          or FileExists(ExpandConstant('{localappdata}\Programs\Ollama\ollama.exe'));
 end;
 
+function PandocInstalled(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := Exec('cmd.exe', '/C where pandoc', '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
+            and (ResultCode = 0);
+end;
+
+procedure InstallWithWinget(PackageId: String; DisplayName: String);
+var
+  ResultCode: Integer;
+  PSCommand: String;
+begin
+  PSCommand := 'winget install --id ' + PackageId + ' --silent --accept-package-agreements --accept-source-agreements';
+  if MsgBox(
+    DisplayName + ' non è installato sul sistema.' + #13#10 +
+    'Vuoi installarlo automaticamente tramite winget?' + #13#10#13#10 +
+    'Verrà eseguito:' + #13#10 +
+    '  winget install --id ' + PackageId,
+    mbConfirmation, MB_YESNO
+  ) = IDYES then
+  begin
+    WizardForm.StatusLabel.Caption := 'Installazione ' + DisplayName + ' in corso…';
+    if not Exec('powershell.exe',
+      '-NoProfile -ExecutionPolicy Bypass -Command "' + PSCommand + '"',
+      '', SW_SHOW, ewWaitUntilTerminated, ResultCode)
+      or (ResultCode <> 0) then
+    begin
+      MsgBox(
+        'Installazione automatica di ' + DisplayName + ' fallita (codice ' + IntToStr(ResultCode) + ').' + #13#10 +
+        'Installalo manualmente:' + #13#10 +
+        '  winget install --id ' + PackageId,
+        mbError, MB_OK
+      );
+    end else begin
+      MsgBox(DisplayName + ' installato correttamente.', mbInformation, MB_OK);
+    end;
+  end else begin
+    MsgBox(
+      'Puoi installarlo manualmente in qualsiasi momento con:' + #13#10 +
+      '  winget install --id ' + PackageId,
+      mbInformation, MB_OK
+    );
+  end;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
+    if not PandocInstalled() then
+      InstallWithWinget('JohnMacFarlane.Pandoc', 'Pandoc');
+
     if not OllamaInstalled() then
-    begin
-      MsgBox(
-        'Ollama non è installato sul sistema.' + #13#10 +
-        'any2notes richiede Ollama per le funzioni di riassunto.' + #13#10#13#10 +
-        'Scaricalo da: https://ollama.com/download' + #13#10 +
-        'Dopo averlo installato, avvia ''ollama serve'' prima di usare any2notes.',
-        mbInformation, MB_OK
-      );
-    end;
+      InstallWithWinget('Ollama.Ollama', 'Ollama');
   end;
 end;

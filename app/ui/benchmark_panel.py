@@ -17,8 +17,14 @@ from PyQt6.QtWidgets import (
 
 from app.core.runner import ScriptRunner
 from app.ui.widgets import LogView, FileDropButton, make_separator
+import sys
 
-BENCH_DIR = Path(__file__).parent.parent.parent / "benchmark"
+if getattr(sys, 'frozen', False):
+    BENCH_DIR = Path(sys.executable).parent / "benchmark"
+else:
+    BENCH_DIR = Path(__file__).parent.parent.parent / "benchmark"
+
+
 BENCH_FILE = BENCH_DIR / "results.json"
 
 
