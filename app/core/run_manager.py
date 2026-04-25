@@ -86,6 +86,9 @@ class RunManager:
     def load(cls, run_id: str) -> "RunManager":
         return cls(run_id)
 
+    def reload(self):
+        self._load()
+
     def _load(self):
         if self.meta_path.exists():
             self._data = json.loads(self.meta_path.read_text(encoding="utf-8"))

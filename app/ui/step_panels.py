@@ -166,6 +166,9 @@ class Step1Panel(QWidget):
         self._btn_stop = QPushButton("Interrompi")
         self._btn_stop.setEnabled(False)
         self._btn_stop.clicked.connect(self._runner.stop)
+        #self._btn_next = QPushButton("Prossimo Step")
+        #self._btn_next.setEnabled(False)
+        #self._btn_next.clicked.connect(self._)
         self._btn_export = _ghost_btn("Esporta output")
         self._btn_export.setEnabled(False)
         self._btn_export.clicked.connect(self._export)
@@ -191,6 +194,7 @@ class Step1Panel(QWidget):
     def _update_buttons(self):
         has_output = bool(self._run and self._run.step_versions(self.STEP_ID))
         self._btn_export.setEnabled(has_output)
+        #self._btn_next.setEnabled(has_output)
 
     def _collect_params(self) -> dict:
         return {

@@ -367,11 +367,15 @@ class MainWindow(QMainWindow):
 
     def _on_step_completed(self, step_index: int):
         if self._current_run:
+            self._current_run.reload()
             self._update_badges()
             self._pipeline_bar.update_statuses(self._current_run)
         # Suggerisci prossimo step
         if step_index < 2:
-            self._navigate_to(step_index + 1)
+            next_index = step_index + 1
+            next_panel = [self._panel_step1, self._panel_step2, self._panel_step3][next_index]
+            next_panel.set_run(self.current_run())
+            # self._navigate_to(step_index + 1)
 
     def _update_badges(self):
         if not self._current_run:
@@ -398,6 +402,11 @@ class MainWindow(QMainWindow):
         self._current_run = run
         self._load_runs_list()
         self._activate_run(run)
+
+    def current_run(self) -> RunManager:
+        if not self._current_run:
+            raise RuntimeError("Nessuna run attiva")
+        return self._current_run
 
     def _activate_run(self, run: RunManager):
         self._current_run = run
