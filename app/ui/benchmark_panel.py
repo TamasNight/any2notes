@@ -4,30 +4,28 @@ Esegue test di velocità per speech2text e mostra storico risultati.
 """
 
 import json
+import re
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
-import re
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QObject
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QFileDialog,
-    QProgressBar, QComboBox, QMessageBox,
+    QTableWidget, QTableWidgetItem, QHeaderView, QProgressBar, QComboBox, QMessageBox,
 )
 
 from app.core.runner import ScriptRunner
 from app.ui.widgets import LogView, FileDropButton, make_separator
-import sys
 
 if getattr(sys, 'frozen', False):
     # BENCH_DIR = Path(sys.executable).parent / "benchmark"
     BENCH_DIR = Path.home() / ".any2notes" / "benchmark"
     BENCH_DIR.parent.mkdir(parents=True, exist_ok=True)
+    SAMPLE_PATH = Path(sys.executable).parent / "assets/bechmark.m4a"
 else:
     BENCH_DIR = Path(__file__).parent.parent.parent / "benchmark"
-
-
+    SAMPLE_PATH = Path(__file__).parent.parent.parent / "assets/bechmark.m4a"
 BENCH_FILE = BENCH_DIR / "results.json"
 
 
@@ -95,13 +93,13 @@ class BenchmarkPanel(QWidget):
         setup_card.setObjectName("card")
         sl = QVBoxLayout(setup_card)
         sl.setSpacing(12)
-        sl.addWidget(self._make_section_label("File di test (~1 minuto di audio)"))
+        # sl.addWidget(self._make_section_label("File di test (~1 minuto di audio)"))
 
-        self._file_btn = FileDropButton(
-            "Trascina file audio o clicca per sfogliare",
-            "Audio (*.mp3 *.wav *.m4a *.ogg *.flac)"
-        )
-        sl.addWidget(self._file_btn)
+        # self._file_btn = FileDropButton(
+        #     "Trascina file audio o clicca per sfogliare",
+        #     "Audio (*.mp3 *.wav *.m4a *.ogg *.flac)"
+        # )
+        # sl.addWidget(self._file_btn)
 
         row_params = QHBoxLayout()
         row_params.setSpacing(16)
@@ -213,10 +211,6 @@ class BenchmarkPanel(QWidget):
         return l
 
     def _run_benchmark(self):
-        if not self._file_btn.path:
-            QMessageBox.warning(self, "File mancante", "Seleziona un file audio di ~1 minuto.")
-            return
-
         engine_idx = self._engine_combo.currentIndex()
         model = self._model_combo.currentText()
 
@@ -225,10 +219,10 @@ class BenchmarkPanel(QWidget):
 
         if engine_idx == 0:
             script = "benchmark_whisper.py"
-            args = [self._file_btn.path, str(out_file), model, "it", "3", "cpu"]
+            args = [str(SAMPLE_PATH), str(out_file), model, "it", "3", "cpu"]
         else:
             script = "benchmark_whisper.py"
-            args = [self._file_btn.path, str(out_file), model, "it", "3", "cuda"]
+            args = [str(SAMPLE_PATH), str(out_file), model, "it", "3", "cuda"]
 
         self._pending = {
             "engine": self._engine_combo.currentText(),
