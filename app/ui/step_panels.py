@@ -28,9 +28,13 @@ def _card(parent=None) -> QWidget:
     return w
 
 
-def _label_section(text: str) -> QLabel:
+def _label_section(text: str, no_bg: bool = False, ow_color: bool = False, color: str = "white") -> QLabel:
     l = QLabel(text)
     l.setObjectName("label_section")
+    if no_bg:
+        l.setStyleSheet("background-color: rgba(0,0,0,0);")
+    if ow_color:
+        l.setStyleSheet(f"color: {color};")
     return l
 
 
@@ -92,7 +96,7 @@ class Step1Panel(QWidget):
         card1 = _card()
         c1l = QVBoxLayout(card1)
         c1l.setSpacing(10)
-        c1l.addWidget(_label_section("File audio"))
+        c1l.addWidget(_label_section("File audio", True, True))
         self._file_btn = FileDropButton(
             "Trascina file audio o clicca per sfogliare",
             "Audio (*.mp3 *.wav *.m4a *.ogg *.flac *.mp4 *.mkv *.webm)",
@@ -105,7 +109,7 @@ class Step1Panel(QWidget):
         card2 = _card()
         c2l = QVBoxLayout(card2)
         c2l.setSpacing(12)
-        c2l.addWidget(_label_section("Parametri"))
+        c2l.addWidget(_label_section("Parametri", True, True))
 
         # Engine
         row_engine = QHBoxLayout()
@@ -153,7 +157,7 @@ class Step1Panel(QWidget):
         # Log
         card3 = _card()
         c3l = QVBoxLayout(card3)
-        c3l.addWidget(_label_section("Output"))
+        c3l.addWidget(_label_section("Output", True, True))
         self._log = LogView()
         self._log.setMinimumHeight(120)
         c3l.addWidget(self._log)
@@ -325,7 +329,7 @@ class Step2Panel(QWidget):
         # Modalità: generico vs lezione
         mode_card = _card()
         ml = QVBoxLayout(mode_card)
-        ml.addWidget(_label_section("Modalità"))
+        ml.addWidget(_label_section("Modalità", True, True))
         self._mode_group = QButtonGroup(self)
         self._rb_generic = QRadioButton("Testo generico  (summary.py)")
         self._rb_lecture = QRadioButton("Riassunto lezione  (summarize_lecture.py + PPTX)")
@@ -349,7 +353,7 @@ class Step2Panel(QWidget):
         il.addWidget(self._ver_selector)
 
         # PPTX (solo modalità lezione)
-        self._pptx_label = _label_section("File PPTX")
+        self._pptx_label = _label_section("File PPTX", True, True)
         self._pptx_btn = FileDropButton("Trascina .pptx o clicca per sfogliare", "PowerPoint (*.pptx)")
         self._pptx_btn.file_selected.connect(lambda p: None)
         self._pptx_label.hide()
@@ -363,7 +367,7 @@ class Step2Panel(QWidget):
         param_card = _card()
         pl = QVBoxLayout(param_card)
         pl.setSpacing(12)
-        pl.addWidget(_label_section("Parametri"))
+        pl.addWidget(_label_section("Parametri", True, True))
 
         row1 = QHBoxLayout()
         row1.setSpacing(16)
@@ -418,7 +422,7 @@ class Step2Panel(QWidget):
         # Log
         log_card = _card()
         ll = QVBoxLayout(log_card)
-        ll.addWidget(_label_section("Output"))
+        ll.addWidget(_label_section("Output", True, True))
         self._log = LogView()
         self._log.setMinimumHeight(100)
         ll.addWidget(self._log)
@@ -618,7 +622,7 @@ class Step3Panel(QWidget):
         # Formato
         fmt_card = _card()
         fl = QVBoxLayout(fmt_card)
-        fl.addWidget(_label_section("Formato output"))
+        fl.addWidget(_label_section("Formato output", True, True))
         self._fmt_group = QButtonGroup(self)
         self._rb_docx = QRadioButton("DOCX  (Word)")
         self._rb_pdf  = QRadioButton("PDF")
@@ -635,7 +639,7 @@ class Step3Panel(QWidget):
         # Log
         log_card = _card()
         ll = QVBoxLayout(log_card)
-        ll.addWidget(_label_section("Output"))
+        ll.addWidget(_label_section("Output", True, True))
         self._log = LogView()
         self._log.setMinimumHeight(100)
         ll.addWidget(self._log)

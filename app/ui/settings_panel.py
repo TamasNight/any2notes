@@ -28,7 +28,6 @@ DEFAULTS = {
     "default_beam_size": 3,
     "default_ollama_model": "gemma4",
     "default_chunk_size": 4000,
-    "cuda_available": False,     # utente conferma di avere CUDA + torch
     "ollama_host": "http://localhost:11434",
 }
 
@@ -114,12 +113,6 @@ class SettingsPanel(QWidget):
         row1.addLayout(col_beam)
         row1.addStretch()
         wg.addLayout(row1)
-
-        self._cuda_check = QCheckBox(
-            "Ho installato CUDA + torch / ctranslate2-CUDA  "
-            "(abilita engine Whisper CUDA nella UI)"
-        )
-        wg.addWidget(self._cuda_check)
 
         root.addWidget(whisper_group)
 
@@ -223,7 +216,6 @@ class SettingsPanel(QWidget):
         if idx2 >= 0:
             self._lang_combo.setCurrentIndex(idx2)
         self._beam_spin.setValue(s.get("default_beam_size", 3))
-        self._cuda_check.setChecked(s.get("cuda_available", False))
         self._omodel_edit.setText(s.get("default_ollama_model", "gemma4"))
         self._chunk_spin.setValue(s.get("default_chunk_size", 4000))
 
@@ -235,7 +227,6 @@ class SettingsPanel(QWidget):
             "default_model_whisper":  self._wmodel_combo.currentText(),
             "default_language":       self._lang_combo.currentText(),
             "default_beam_size":      self._beam_spin.value(),
-            "cuda_available":         self._cuda_check.isChecked(),
             "default_ollama_model":   self._omodel_edit.text().strip(),
             "default_chunk_size":     self._chunk_spin.value(),
         })

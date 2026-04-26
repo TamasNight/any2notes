@@ -232,6 +232,9 @@ QScrollBar:horizontal { height: 8px; background: #161a15; border: none; }
 QScrollBar::handle:horizontal { background: #2e352d; border-radius: 4px; }
 
 /* ── Labels ──────────────────────────────────────────────────────────── */
+QLabel {
+    background-color: rgba(0,0,0,0);
+}
 QLabel#label_section {
     color: #4d6349;
     font-size: 10px;
@@ -284,8 +287,10 @@ QMessageBox {
 
 /* ── CheckBox ────────────────────────────────────────────────────────── */
 QCheckBox {
+    background-color: rgba(0,0,0,0);
     color: #8fa882;
     spacing: 8px;
+
 }
 QCheckBox::indicator {
     width: 16px;
@@ -306,6 +311,7 @@ QCheckBox::indicator:hover {
 QRadioButton {
     color: #8fa882;
     spacing: 8px;
+    background-color: rgba(0,0,0,0);
 }
 QRadioButton::indicator {
     width: 16px;

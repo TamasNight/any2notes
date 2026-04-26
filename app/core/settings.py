@@ -23,7 +23,6 @@ DEFAULTS = {
     "default_beam_size": 3,
     "default_ollama_model": "gemma4",
     "default_chunk_size": 4000,
-    "cuda_available": False,
     "ollama_host": "http://localhost:11434",
 }
 
