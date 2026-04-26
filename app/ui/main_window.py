@@ -35,6 +35,7 @@ STATUS_COLORS = {
     STATUS_ERROR:   "#c06060",
 }
 
+PANELS_NO_RUN_REQUIRED = {3, 4}
 
 # ── NavButton ─────────────────────────────────────────────────────────── #
 
@@ -355,7 +356,7 @@ class MainWindow(QMainWindow):
         return sa
 
     # ------------------------------------------------------------------ #
-    #  Navigation                                                          #
+    #  Navigation                                                        #
     # ------------------------------------------------------------------ #
 
     def _navigate_to(self, index: int):
@@ -363,7 +364,17 @@ class MainWindow(QMainWindow):
             btn.set_active(i == index)
         self._bench_btn.set_active(index == 3)
         self._settings_btn.set_active(index == 4)
-        self._stack.setCurrentIndex(index)
+        if index in PANELS_NO_RUN_REQUIRED:
+            self._no_run_widget.setVisible(False)
+            self._stack.setVisible(True)
+            self._stack.setCurrentIndex(index)
+        elif self._current_run is None:
+            self._stack.setVisible(False)
+            self._no_run_widget.setVisible(True)
+        else:
+            self._no_run_widget.setVisible(False)
+            self._stack.setVisible(True)
+            self._stack.setCurrentIndex(index)
 
     def _on_step_completed(self, step_index: int):
         if self._current_run:
