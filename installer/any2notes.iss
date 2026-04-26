@@ -8,8 +8,8 @@
 
 #define AppName "any2notes"
 #define AppVersion "0.3.0"
-#define AppPublisher "any2notes"
-#define AppURL "https://github.com/your-repo/any2notes"
+#define AppPublisher "TamasNight"
+#define AppURL "https://github.com/TamasNight/any2notes"
 #define AppExeName "launcher.exe"
 #define BuildDir "..\build\output"
 
@@ -59,7 +59,7 @@ Source: "..\scripts\*"; DestDir: "{app}\scripts"; Flags: ignoreversion recursesu
 Source: "..\build\python_env\*"; DestDir: "{app}\python"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Assets
-;Source: "..\assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.psd"
+Source: "..\assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.psd"
 
 ; main.py e requirements
 Source: "..\main.py"; DestDir: "{app}"; Flags: ignoreversion
@@ -67,8 +67,6 @@ Source: "..\requirements.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Dirs]
 ; Cartelle runtime (verranno create vuote e popolate dall'app)
-Name: "{app}\runs"
-Name: "{app}\benchmark"
 Name: "{app}\models"
 
 [Icons]
@@ -77,12 +75,20 @@ Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]
-; Installa dipendenze pip nell'env embedded subito dopo l'installazione
+; Installa dipendenze base
 Filename: "{app}\python\python.exe"; \
-  Parameters: "-m pip install --no-index --find-links=""{app}\python\wheels"" PyQt6 faster-whisper"; \
+  Parameters: "-m pip install -r {app}\requirements.txt"; \
   WorkingDir: "{app}"; \
   StatusMsg: "Installazione dipendenze Python…"; \
   Flags: runhidden waituntilterminated
+
+; Installa torch CUDA 12.8 (solo se selezionato CUDA)
+Filename: "{app}\python\python.exe"; \
+  Parameters: "-m pip install torch --index-url https://download.pytorch.org/whl/cu128" --upgrade; \
+  WorkingDir: "{app}"; \
+  StatusMsg: "Installazione torch (CUDA 12.8)…"; \
+  Flags: runhidden waituntilterminated; \
+  Check: IsCudaSelected
 
 ; Avvia l'app alla fine dell'installer (opzionale)
 Filename: "{app}\{#AppExeName}"; \
@@ -148,6 +154,46 @@ begin
       '  winget install --id ' + PackageId,
       mbInformation, MB_OK
     );
+  end;
+end;
+
+var
+  CudaCheckbox: TNewCheckBox;
+  CudaPage: TWizardPage;
+
+function IsCudaSelected(): Boolean;
+begin
+  Result := CudaCheckbox.Checked;
+end;
+
+procedure InitializeWizard();
+begin
+  CudaPage := CreateCustomPage(
+    wpSelectTasks,
+    'Opzioni GPU',
+    'Seleziona il supporto hardware per la trascrizione audio'
+  );
+
+  CudaCheckbox := TNewCheckBox.Create(CudaPage);
+  CudaCheckbox.Parent := CudaPage.Surface;
+  CudaCheckbox.Left := 0;
+  CudaCheckbox.Top := 16;
+  CudaCheckbox.Width := CudaPage.SurfaceWidth;
+  CudaCheckbox.Height := 32;
+  CudaCheckbox.Caption := 'Abilita supporto CUDA 12.8 (richiede GPU NVIDIA con driver aggiornati)';
+  CudaCheckbox.Checked := False;
+
+  { Nota informativa sotto il checkbox }
+  with TNewStaticText.Create(CudaPage) do
+  begin
+    Parent := CudaPage.Surface;
+    Left := 0;
+    Top := 52;
+    Width := CudaPage.SurfaceWidth;
+    Caption :=
+      'Con CUDA: installa torch+CUDA 12.8 e openai-whisper (~4 GB, richiede GPU NVIDIA).' + #13#10 +
+      'Senza CUDA: installa torch CPU e faster-whisper (consigliato, ~500 MB).';
+    AutoSize := True;
   end;
 end;
 

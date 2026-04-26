@@ -32,9 +32,9 @@ echo.
 
 REM ── Step 1: Scarica Python Embeddable ──────────────────────────────────
 if exist "%PYENV%\python.exe" (
-    echo [1/5] Python embeddable gia' presente. Skip.
+    echo [1/4] Python embeddable gia' presente. Skip.
 ) else (
-    echo [1/5] Download Python 3.11 embeddable...
+    echo [1/4] Download Python 3.11 embeddable...
     powershell -Command "Invoke-WebRequest -Uri '%PYEMB_URL%' -OutFile '%PYEMB_ZIP%'"
     if errorlevel 1 (
         echo ERRORE: Download Python fallito.
@@ -48,7 +48,7 @@ if exist "%PYENV%\python.exe" (
 )
 
 REM ── Step 2: Abilita import di site-packages nell'embeddable ────────────
-echo [2/5] Configurazione python311._pth...
+echo [2/4] Configurazione python311._pth...
 REM Il file ._pth deve includere "import site" per permettere pip
 set PTH_FILE=%PYENV%\python311._pth
 (
@@ -60,9 +60,9 @@ set PTH_FILE=%PYENV%\python311._pth
 
 REM ── Step 3: Installa pip nell'embeddable ───────────────────────────────
 if exist "%PYENV%\Scripts\pip.exe" (
-    echo [3/5] pip gia' installato. Skip.
+    echo [3/4] pip gia' installato. Skip.
 ) else (
-    echo [3/5] Installazione pip nell'embeddable...
+    echo [3/4] Installazione pip nell'embeddable...
     powershell -Command "Invoke-WebRequest -Uri 'https://bootstrap.pypa.io/get-pip.py' -OutFile '%GET_PIP%'"
     if errorlevel 1 (
         echo ERRORE: Download get-pip.py fallito.
@@ -73,36 +73,8 @@ if exist "%PYENV%\Scripts\pip.exe" (
     echo       OK.
 )
 
-REM ── Step 4: Installa dipendenze pip ───────────────────────────────────
-echo [4/5] Installazione dipendenze pip...
-echo       (PyQt6, faster-whisper, openai-whisper, python-pptx, ecc.)
-
-"%PYENV%\python.exe" -m pip install ^
-    torch ^
-    --index-url https://download.pytorch.org/whl/cu128 ^
-    --target "%PYENV%\Lib\site-packages" ^
-    --upgrade
-
-"%PYENV%\python.exe" -m pip install ^
-    PyQt6 ^
-    faster-whisper ^
-    openai-whisper ^
-    python-pptx ^
-    ollama ^
-    pypandoc ^
-    pdfplumber ^
-    pypdf ^
-    pillow ^
-    --target "%PYENV%\Lib\site-packages"
-
-if errorlevel 1 (
-    echo ERRORE: Installazione dipendenze fallita.
-    exit /b 1
-)
-echo       OK.
-
-REM ── Step 5: Compila launcher.exe con PyInstaller ───────────────────────
-echo [5/5] Compilazione launcher.exe...
+REM ── Step 4: Compila launcher.exe con PyInstaller ───────────────────────
+echo [4/4] Compilazione launcher.exe...
 
 REM Assicurati che PyInstaller sia installato nel Python di sistema
 python -m pip install pyinstaller --quiet
@@ -141,7 +113,7 @@ echo  Env:    build\python_env\
 echo.
 echo  Prossimi passi:
 echo    1. Apri installer\any2notes.iss con Inno Setup Compiler
-echo    2. Compila per ottenere dist\any2notes-setup-0.1.0.exe
+echo    2. Compila per ottenere dist\any2notes-setup-0.4.0.exe
 echo ============================================================
 echo.
 
