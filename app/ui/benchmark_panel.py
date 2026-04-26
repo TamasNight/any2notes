@@ -20,7 +20,9 @@ from app.ui.widgets import LogView, FileDropButton, make_separator
 import sys
 
 if getattr(sys, 'frozen', False):
-    BENCH_DIR = Path(sys.executable).parent / "benchmark"
+    # BENCH_DIR = Path(sys.executable).parent / "benchmark"
+    BENCH_DIR = Path.home() / ".any2notes" / "benchmark"
+    BENCH_DIR.parent.mkdir(parents=True, exist_ok=True)
 else:
     BENCH_DIR = Path(__file__).parent.parent.parent / "benchmark"
 

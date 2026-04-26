@@ -78,6 +78,12 @@ echo [4/5] Installazione dipendenze pip...
 echo       (PyQt6, faster-whisper, openai-whisper, python-pptx, ecc.)
 
 "%PYENV%\python.exe" -m pip install ^
+    torch ^
+    --index-url https://download.pytorch.org/whl/cu128 ^
+    --target "%PYENV%\Lib\site-packages" ^
+    --upgrade
+
+"%PYENV%\python.exe" -m pip install ^
     PyQt6 ^
     faster-whisper ^
     openai-whisper ^
@@ -87,8 +93,7 @@ echo       (PyQt6, faster-whisper, openai-whisper, python-pptx, ecc.)
     pdfplumber ^
     pypdf ^
     pillow ^
-    --target "%PYENV%\Lib\site-packages" ^
-    --upgrade
+    --target "%PYENV%\Lib\site-packages"
 
 if errorlevel 1 (
     echo ERRORE: Installazione dipendenze fallita.

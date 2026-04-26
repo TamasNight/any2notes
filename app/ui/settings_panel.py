@@ -14,7 +14,9 @@ from PyQt6.QtWidgets import (
 import sys
 
 if getattr(sys, 'frozen', False):
-    SETTINGS_FILE = Path(sys.executable).parent / "settings.json"
+    # SETTINGS_FILE = Path(sys.executable).parent / "settings.json"
+    SETTINGS_FILE = Path.home() / ".any2notes" / "settings.json"
+    SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
 else:
     SETTINGS_FILE = Path(__file__).parent.parent.parent / "settings.json"
 

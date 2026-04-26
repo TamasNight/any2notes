@@ -7,7 +7,7 @@
 ;   3. Compila questo script con Inno Setup Compiler
 
 #define AppName "any2notes"
-#define AppVersion "0.1.0"
+#define AppVersion "0.3.0"
 #define AppPublisher "any2notes"
 #define AppURL "https://github.com/your-repo/any2notes"
 #define AppExeName "launcher.exe"
@@ -34,7 +34,7 @@ WizardStyle=modern
 ; Icona (genera con assets/icon.ico)
 ; SetupIconFile=..\assets\icon.ico
 UninstallDisplayIcon={app}\{#AppExeName}
-MinVersion=10.0.17763   ; Windows 10 1809+
+MinVersion=10.0.17763
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 
@@ -59,7 +59,7 @@ Source: "..\scripts\*"; DestDir: "{app}\scripts"; Flags: ignoreversion recursesu
 Source: "..\build\python_env\*"; DestDir: "{app}\python"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Assets
-Source: "..\assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.psd"
+;Source: "..\assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.psd"
 
 ; main.py e requirements
 Source: "..\main.py"; DestDir: "{app}"; Flags: ignoreversion

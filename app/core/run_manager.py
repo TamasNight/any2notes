@@ -11,7 +11,9 @@ from typing import Optional
 
 import sys
 if getattr(sys, 'frozen', False):
-    RUNS_DIR = Path(sys.executable).parent / "runs"
+    # RUNS_DIR = Path(sys.executable).parent / "runs"
+    RUNS_DIR = Path.home() / ".any2notes" / "runs"
+    RUNS_DIR.mkdir(parents=True, exist_ok=True)
 else:
     RUNS_DIR = Path(__file__).parent.parent.parent / "runs"
 
