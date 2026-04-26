@@ -7,6 +7,7 @@ import json
 import time
 from datetime import datetime
 from pathlib import Path
+import re
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QObject
 from PyQt6.QtWidgets import (
@@ -65,7 +66,11 @@ class BenchmarkPanel(QWidget):
         self._start_time: float = 0.0
         self._results: list[dict] = _load_results()
         self._pending: dict = {}
-        self._runner.stdout_line.connect(lambda l: self._log.append_stdout(l))
+        self._result_benchmark = []
+        def handle_log(l):
+            self._log.append_stdout(l)
+            self._result_benchmark.append(l)
+        self._runner.stdout_line.connect(handle_log)
         self._runner.stderr_line.connect(lambda l: self._log.append_stderr(l))
         self._runner.finished.connect(self._on_finished)
         self._runner.error.connect(lambda e: self._log.append_stderr(f"ERRORE: {e}"))
@@ -81,8 +86,6 @@ class BenchmarkPanel(QWidget):
         title.setObjectName("label_title")
         root.addWidget(title)
         root.addWidget(QLabel(
-            "Esegui un test con un file audio di ~1 minuto per stimare i tempi sul tuo hardware."
-        ).setObjectName("label_muted") or QLabel(
             "Esegui un test con un file audio di ~1 minuto per stimare i tempi sul tuo hardware."
         ))
         root.addWidget(make_separator())
@@ -239,7 +242,18 @@ class BenchmarkPanel(QWidget):
         self._runner.run(script, args)
 
     def _on_finished(self, exit_code: int):
-        elapsed = time.time() - self._start_time
+        regex = r'RISULTATO: trascrizione=(\d+\.\d+)s \|'
+        log = "\n".join(self._result_benchmark)
+        match = re.search(regex, log)
+        if match:
+            elapsed = float(match.group(1))
+        else:
+            # Fallback: usa il tempo misurato lato UI (meno preciso ma mai None)
+            elapsed = time.time() - self._start_time
+            self._log.append_info(
+                "⚠ Tempo letto dal fallback (timer UI) — riga RISULTATO non trovata nell'output."
+            )
+        self._result_benchmark = []
         self._btn_run.setEnabled(True)
         self._btn_stop.setEnabled(False)
         self._progress.hide()
