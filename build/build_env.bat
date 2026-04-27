@@ -88,6 +88,7 @@ pyinstaller ^
     --onefile ^
     --windowed ^
     --name launcher ^
+    --icon="%ROOT%\assets\icon.ico" ^
     --distpath "%BUILD_OUT%" ^
     --workpath "%ROOT%\build\pyinstaller_tmp" ^
     --add-data "%ROOT%\app:app" ^

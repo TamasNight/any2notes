@@ -7,7 +7,7 @@
 ;   3. Compila questo script con Inno Setup Compiler
 
 #define AppName "any2notes"
-#define AppVersion "0.3.0"
+#define AppVersion "0.4.1"
 #define AppPublisher "TamasNight"
 #define AppURL "https://github.com/TamasNight/any2notes"
 #define AppExeName "launcher.exe"
@@ -32,7 +32,7 @@ Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
 ; Icona (genera con assets/icon.ico)
-; SetupIconFile=..\assets\icon.ico
+SetupIconFile=..\assets\icon.ico
 UninstallDisplayIcon={app}\{#AppExeName}
 MinVersion=10.0.17763
 ArchitecturesAllowed=x64compatible
@@ -63,7 +63,6 @@ Source: "..\assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubd
 
 ; main.py e requirements
 Source: "..\main.py"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\requirements.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Dirs]
 ; Cartelle runtime (verranno create vuote e popolate dall'app)
@@ -77,17 +76,17 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: deskto
 [Run]
 ; Installa dipendenze base
 Filename: "{app}\python\python.exe"; \
-  Parameters: "-m pip install -r {app}\requirements.txt"; \
+  Parameters: "-m pip install PyQt6 faster-whisper pypandoc openai-whisper ollama pdfplumber pillow python-pptx pypdf --no-warn-script-location"; \
   WorkingDir: "{app}"; \
   StatusMsg: "Installazione dipendenze Python…"; \
-  Flags: runhidden waituntilterminated
+  Flags: waituntilterminated
 
 ; Installa torch CUDA 12.8 (solo se selezionato CUDA)
 Filename: "{app}\python\python.exe"; \
-  Parameters: "-m pip install torch --index-url https://download.pytorch.org/whl/cu128" --upgrade; \
+  Parameters: "-m pip install torch --index-url https://download.pytorch.org/whl/cu128 --upgrade --no-warn-script-location"; \
   WorkingDir: "{app}"; \
   StatusMsg: "Installazione torch (CUDA 12.8)…"; \
-  Flags: runhidden waituntilterminated; \
+  Flags: waituntilterminated; \
   Check: IsCudaSelected
 
 ; Avvia l'app alla fine dell'installer (opzionale)
@@ -100,6 +99,7 @@ Filename: "{app}\{#AppExeName}"; \
 ; Per sicurezza lasciamo che l'utente cancelli manualmente la cartella "runs\"
 Type: filesandordirs; Name: "{app}\benchmark"
 Type: filesandordirs; Name: "{app}\models"
+Type: filesandordirs; Name: "{app}\python"
 
 [Code]
 { ---- Controlla se Ollama è installato ---- }
@@ -191,8 +191,9 @@ begin
     Top := 52;
     Width := CudaPage.SurfaceWidth;
     Caption :=
-      'Con CUDA: installa torch+CUDA 12.8 e openai-whisper (~4 GB, richiede GPU NVIDIA).' + #13#10 +
-      'Senza CUDA: installa torch CPU e faster-whisper (consigliato, ~500 MB).';
+      'Con CUDA: installa torch+CUDA 12.8 fondamentale per inferenza su GPU.' + #13#10 + 
+      'Richiede GPU NVIDIA. (Download aggiuntivo ~3 GB).' + #13#10 +
+      'Senza CUDA: installa torch CPU, più lento ma non richiede GPU dedicata. (consigliato).';
     AutoSize := True;
   end;
 end;

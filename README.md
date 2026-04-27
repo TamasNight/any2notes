@@ -13,7 +13,7 @@ Wrapper UI (PyQt6) per una pipeline di script Python:
 ```
 any2notes/
 ├── main.py                     # Entry point
-├── requirements.txt            # Solo PyQt6 (UI)
+├── requirements.txt            
 ├── settings.json               # Generato al primo avvio
 │
 ├── app/
@@ -79,11 +79,8 @@ cd any2notes
 python -m venv .venv
 .venv\Scripts\activate       # Windows
 
-# Installa dipendenze UI
-pip install PyQt6
-
 # Installa le dipendenze degli script (vedi sezione sotto)
-pip install faster-whisper openai-whisper python-pptx python-docx ollama
+pip install -r requirements.txt
 ```
 
 ### Avvio in sviluppo
@@ -97,13 +94,13 @@ se non trova `python\python.exe` nella root del progetto.
 
 ### Dipendenze degli script
 
-| Script | Librerie pip |
-|---|---|
-| `fast-speech2text.py` | `faster-whisper` |
-| `speech2text.py` | `openai-whisper`, `torch` (CUDA) |
-| `summary.py` | `ollama` |
-| `summarize_lecture.py` | `ollama`, `python-pptx`, `Pillow` |
-| `md2doc.py` | `python-docx`, pandoc (eseguibile esterno) |
+| Script | Librerie pip                                                                             |
+|---|------------------------------------------------------------------------------------------|
+| `fast-speech2text.py` | `faster-whisper`                                                                         |
+| `speech2text.py` | `openai-whisper`, `torch` (CUDA)                                                         |
+| `summary.py` | `ollama`, ollama (eseguibile esterno)                                                    |
+| `summarize_lecture.py` | `ollama`, `python-pptx`, `Pillow`, `pdfplumber`, `pypdf` , ollama (eseguibile esterno)   |
+| `md2doc.py` | `pypadoc`, pandoc (eseguibile esterno)                                                   |
 
 ### Pandoc
 
@@ -121,7 +118,8 @@ Prima di avviare any2notes:
 ollama serve
 # In un altro terminale:
 ollama pull gemma4
-ollama pull qwen3.6
+# o il modello che preferisci:
+ollama pull any
 ```
 
 ---
@@ -137,25 +135,16 @@ build_env.bat
 
 Questo script:
 - Scarica Python 3.11 Embeddable in `build\python_env\`
-- Installa pip e tutte le dipendenze nell'env embedded
+- Installa pip
 - Compila `launcher.exe` con PyInstaller in `build\output\`
 
-### 2. Aggiungi Pandoc
-
-Scarica `pandoc.exe` da [github.com/jgm/pandoc/releases](https://github.com/jgm/pandoc/releases)
-e copialo in:
-
-```
-build\bin\pandoc.exe
-```
-
-### 3. Compila l'installer
+### 2. Compila l'installer
 
 Apri `installer\any2notes.iss` con **Inno Setup Compiler** e premi F9.
 
 L'installer finale viene generato in:
 ```
-dist\any2notes-setup-0.1.0.exe
+dist\any2notes-setup-0.4.1.exe
 ```
 
 ### Cosa installa l'installer
@@ -164,7 +153,7 @@ dist\any2notes-setup-0.1.0.exe
 - `app\` — codice UI PyQt6
 - `scripts\` — script Python
 - `python\` — Python 3.11 embeddable con tutte le dipendenze
-- `bin\pandoc.exe` — Pandoc bundlato
+- Dipendenza Python nell'embed usando pip
 - Shortcut desktop e menu Start
 - Check Ollama: se non trovato, mostra messaggio con link al download
 
@@ -172,7 +161,7 @@ dist\any2notes-setup-0.1.0.exe
 
 ## Gestione Run
 
-Ogni sessione di lavoro è una **run** persistente su disco.
+Ogni sessione di lavoro è una **run** persistente su disco. I file di output e configurazione vengono salvati nella cartella `~/.any2notes`:
 
 ```
 runs/
@@ -203,7 +192,7 @@ La sezione **Benchmark** permette di:
 1. Eseguire un test di velocità con un file audio di ~1 minuto
 2. Vedere i tempi reali sul tuo hardware
 3. Ottenere stime automatiche per file da 10, 60 minuti
-4. Confrontare faster-whisper CPU vs openai-whisper CUDA
+4. Confrontare `faster-whisper` (only-CPU) vs `openai-whisper auto` (CPU/CUDA)
 5. Consultare lo storico risultati precedenti (salvato in `benchmark/results.json`)
 
 ---
@@ -220,16 +209,5 @@ Configurabili dalla UI (sezione **Impostazioni**) e salvate in `settings.json`:
 | `default_model_whisper` | `turbo` | Modello Whisper predefinito |
 | `default_language` | `it` | Lingua trascrizione predefinita |
 | `default_beam_size` | `3` | Beam size predefinito |
-| `cuda_available` | `false` | Abilita engine CUDA nella UI |
 | `default_ollama_model` | `gemma4` | Modello Ollama predefinito |
 | `default_chunk_size` | `4000` | Chunk size riassunto predefinito |
-
----
-
-## Note architetturali
-
-- **Nessuna dipendenza da Node.js, Rust o runtime esterni** oltre a Python
-- **QProcess** per tutti i sottoprocessi — la UI non si blocca mai durante l'esecuzione
-- **Python Embeddable** nella distribuzione — nessun conflitto con Python di sistema
-- **Pandoc bundlato** — zero installazioni lato utente
-- **Ollama esterno** — è un servizio di sistema, non ha senso bundlarlo; la UI fa un check all'avvio e ogni 30 secondi

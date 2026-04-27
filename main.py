@@ -13,7 +13,7 @@ else:
 sys.path.insert(0, str(ROOT))
 
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QIcon
 from app.ui.main_window import MainWindow
 
 
@@ -21,6 +21,11 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("any2notes")
     app.setOrganizationName("any2notes")
+    if getattr(sys, 'frozen', False):
+        ICO_PATH = Path(sys.executable).parent / "assets/icon.ico"
+    else:
+        ICO_PATH = Path(__file__).parent / "assets/icon.ico"
+    app.setWindowIcon(QIcon(str(ICO_PATH)))
 
     # Font di sistema (Segoe UI su Windows)
     app.setFont(QFont("Segoe UI", 10))
