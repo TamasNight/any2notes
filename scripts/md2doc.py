@@ -2,6 +2,36 @@ import argparse
 import pypandoc
 from pathlib import Path
 
+def fix_md_separators(file_path):
+    with open(file_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    fixed_lines = []
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+
+        if line.strip() == "---":
+            # Controlla riga precedente
+            if fixed_lines and fixed_lines[-1].strip() != "":
+                fixed_lines.append("\n")
+
+            # Aggiungi il separatore
+            fixed_lines.append("---\n")
+
+            # Controlla riga successiva
+            if i + 1 < len(lines) and lines[i + 1].strip() != "":
+                fixed_lines.append("\n")
+
+            i += 1
+        else:
+            fixed_lines.append(line)
+            i += 1
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.writelines(fixed_lines)
+
 def convert_md(input_files, output_format, output_file):
     # Mapping per le estensioni corrette
     output_path = Path(output_file)
@@ -39,7 +69,8 @@ def main():
                         help="Formato di output: 'docx' (default) o 'pdf'")
     parser.add_argument('-o', '--output', help="File di output")
     args = parser.parse_args()
-
+    for file in args.files:
+        fix_md_separators(file)
     convert_md(args.files, args.format, args.output)
 
 if __name__ == "__main__":
