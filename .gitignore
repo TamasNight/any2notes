@@ -7,3 +7,4 @@ benchmark/
 models/
 build/
 dist/
+.opencode/

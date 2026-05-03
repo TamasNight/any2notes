@@ -111,6 +111,7 @@ class VersionSelector(QWidget):
             ts = v.get("ts", "")[:16].replace("T", " ")
             params = v.get("params", {})
             param_str = "  ·  ".join(f"{k}: {val}" for k, val in params.items())
+            param_str = param_str.replace("cuda", "auto")
             label = f"v{v['v']}  ·  {ts}  ·  {param_str}"
             rb = QRadioButton(label)
             rb.setStyleSheet("color: #8fa882; font-size: 12px;")

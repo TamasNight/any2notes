@@ -114,7 +114,7 @@ echo  Env:    build\python_env\
 echo.
 echo  Prossimi passi:
 echo    1. Apri installer\any2notes.iss con Inno Setup Compiler
-echo    2. Compila per ottenere dist\any2notes-setup-0.4.0.exe
+echo    2. Compila per ottenere dist\any2notes-setup-0.4.1.exe
 echo ============================================================
 echo.
 

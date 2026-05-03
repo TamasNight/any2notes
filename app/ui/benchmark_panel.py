@@ -107,7 +107,7 @@ class BenchmarkPanel(QWidget):
         col_engine = QVBoxLayout()
         col_engine.addWidget(QLabel("Engine:"))
         self._engine_combo = QComboBox()
-        self._engine_combo.addItems(["faster-whisper (CPU)", "whisper (CUDA)"])
+        self._engine_combo.addItems(["faster-whisper (CPU)", "whisper (auto)"])
         col_engine.addWidget(self._engine_combo)
 
         col_model = QVBoxLayout()
@@ -275,7 +275,7 @@ class BenchmarkPanel(QWidget):
     def _update_suggestion(self, bench_sec: float, engine: str):
         s10  = _estimate(10,  bench_sec)
         s60  = _estimate(60,  bench_sec)
-        other = "Faster-Whisper (CPU)" if "CUDA" in engine else "Whisper (CUDA)"
+        other = "Faster-Whisper (CPU)" if "CUDA" in engine else "Whisper (Auto)"
         self._suggestion_label.setText(
             f"Con {engine} / {self._pending['model']}:  10 min audio → ~{s10}  ·  60 min audio → ~{s60}.  "
             f"Prova anche {other} per confrontare."

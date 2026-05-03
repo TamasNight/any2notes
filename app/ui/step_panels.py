@@ -115,7 +115,7 @@ class Step1Panel(QWidget):
         row_engine = QHBoxLayout()
         row_engine.addWidget(QLabel("Engine:"))
         self._engine_group = QButtonGroup(self)
-        for i, (label, val) in enumerate([("Whisper CUDA", "cuda"), ("Faster-Whisper CPU", "cpu")]):
+        for i, (label, val) in enumerate([("Whisper auto (CPU/CUDA)", "auto"), ("Faster-Whisper (only-CPU)", "cpu")]):
             rb = QRadioButton(label)
             self._engine_group.addButton(rb, i)
             if i == 1:
