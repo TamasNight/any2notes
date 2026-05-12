@@ -17,7 +17,10 @@ from PyQt6.QtWidgets import (
 from app.core.run_manager import RunManager, STATUS_DONE, STATUS_IDLE, STATUS_RUNNING, STATUS_ERROR
 from app.core.runner import ScriptRunner
 from app.core import settings as app_settings
-from app.ui.widgets import LogView, VersionSelector, FileDropButton, StatusPill, make_separator
+from app.ui.widgets import (
+    LogView, VersionSelector, OrderedMultiInputSelector,
+    FileDropButton, StatusPill, make_separator,
+)
 
 
 # ── Helper ────────────────────────────────────────────────────────────── #
@@ -353,6 +356,11 @@ class Step2Panel(QWidget):
         il.addWidget(self._ver_selector)
 
         # PPTX (solo modalità lezione)
+        self._multi_input_selector = OrderedMultiInputSelector("trascrizione (step 1)", "Testo (*.txt)")
+        self._multi_input_selector.inputs_changed.connect(self._on_lecture_inputs_changed)
+        self._multi_input_selector.hide()
+        il.addWidget(self._multi_input_selector)
+
         self._pptx_label = _label_section("File PPTX", True, True)
         self._pptx_btn = FileDropButton("Trascina .pptx o clicca per sfogliare", "PowerPoint (*.pptx)")
         self._pptx_btn.file_selected.connect(lambda p: None)
@@ -395,6 +403,7 @@ class Step2Panel(QWidget):
         self._parts_check = QCheckBox("Salva parti separate  (-p)")
         self._slides_only_check = QCheckBox("Solo slide, no trascrizione  (--slides-only)")
         self._no_images_check = QCheckBox("Non inviare immagini  (--no-images)")
+        self._slides_only_check.toggled.connect(self._on_slides_only_changed)
         self._slides_only_check.hide()
         self._no_images_check.hide()
         row2.addWidget(self._parts_check)
@@ -446,14 +455,21 @@ class Step2Panel(QWidget):
         root.addStretch()
 
         self._selected_input_path: str | None = None
+        self._selected_input_paths: list[str] = []
 
     def _on_mode_changed(self, generic_checked: bool):
         is_lecture = not generic_checked
+        self._ver_selector.setVisible(not is_lecture)
+        self._multi_input_selector.setVisible(is_lecture and not self._slides_only_check.isChecked())
         self._pptx_label.setVisible(is_lecture)
         self._pptx_btn.setVisible(is_lecture)
         self._slides_only_check.setVisible(is_lecture)
         self._no_images_check.setVisible(is_lecture)
         self._max_img_row_widget.setVisible(is_lecture)
+
+    def _on_slides_only_changed(self, checked: bool):
+        is_lecture = self._mode_group.checkedId() == 1
+        self._multi_input_selector.setVisible(is_lecture and not checked)
 
     def set_run(self, run: RunManager):
         self._run = run
@@ -461,6 +477,7 @@ class Step2Panel(QWidget):
         versions = run.step_versions(self.PREV_STEP_ID)
         sel = run.step_data(self.PREV_STEP_ID)["selected_version"]
         self._ver_selector.set_versions(versions, sel)
+        self._multi_input_selector.set_versions(versions, sel)
         if versions:
             sel_v = run.selected_version(self.PREV_STEP_ID)
             if sel_v:
@@ -482,16 +499,37 @@ class Step2Panel(QWidget):
     def _on_external_txt(self, path: str):
         self._selected_input_path = path
 
+    def _on_lecture_inputs_changed(self, inputs: list[dict]):
+        self._selected_input_paths = self._resolve_lecture_input_paths(inputs)
+
+    def _resolve_lecture_input_paths(self, inputs: list[dict]) -> list[str]:
+        if not self._run:
+            return []
+        paths = []
+        for item in inputs:
+            if item.get("type") == "version":
+                paths.append(str(self._run.run_dir / self.PREV_STEP_ID / item["file"]))
+            elif item.get("type") == "external":
+                paths.append(item["path"])
+        return paths
+
     def _run_script(self):
         if not self._run:
             return
-        if not self._selected_input_path:
-            QMessageBox.warning(self, "Input mancante", "Seleziona un file di trascrizione.")
-            return
 
         is_lecture = self._mode_group.checkedId() == 1
+        if not is_lecture and not self._selected_input_path:
+            QMessageBox.warning(self, "Input mancante", "Seleziona un file di trascrizione.")
+            return
         if is_lecture and not self._pptx_btn.path:
             QMessageBox.warning(self, "PPTX mancante", "Seleziona un file .pptx per il riassunto lezione.")
+            return
+        if (
+            is_lecture
+            and not self._slides_only_check.isChecked()
+            and not self._selected_input_paths
+        ):
+            QMessageBox.warning(self, "Input mancante", "Seleziona almeno una trascrizione .txt.")
             return
 
         versions = self._run.step_versions(self.STEP_ID)
@@ -529,14 +567,21 @@ class Step2Panel(QWidget):
             script = "summarize_lecture.py"
             args = [self._pptx_btn.path]
             if not self._slides_only_check.isChecked():
-                args.append(self._selected_input_path)
+                args.extend(self._selected_input_paths)
             else:
                 args.append("--slides-only")
             args += ["-m", model, "-o", str(out_file)]
             if self._no_images_check.isChecked():
                 args.append("-ni")
             args += ["--max-images", str(self._max_img_spin.value())]
-            params = {"mode": "lezione", "model": model}
+            params = {
+                "mode": "lezione",
+                "model": model,
+                "inputs": len(self._selected_input_paths),
+                "slides_only": self._slides_only_check.isChecked(),
+                "no_images": self._no_images_check.isChecked(),
+                "max_images": self._max_img_spin.value(),
+            }
 
         self._pending_params = params
         self._pending_overwrite = overwrite_v

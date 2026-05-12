@@ -9,7 +9,7 @@ from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QColor
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QPlainTextEdit, QButtonGroup, QRadioButton, QSizePolicy,
-    QFileDialog, QFrame,
+    QFileDialog, QFrame, QComboBox, QListWidget, QListWidgetItem,
 )
 
 
@@ -143,6 +143,173 @@ class VersionSelector(QWidget):
 
 
 # ── FileDropButton ────────────────────────────────────────────────────── #
+
+class OrderedMultiInputSelector(QWidget):
+    """
+    Permette di comporre una lista ordinata di input usando versioni di uno
+    step precedente e file esterni .txt.
+    """
+
+    inputs_changed = pyqtSignal(list)  # lista di dict: {"type": ..., ...}
+
+    def __init__(self, step_label: str, file_filter: str = "Testo (*.txt)", parent=None):
+        super().__init__(parent)
+        self._file_filter = file_filter
+        self._versions: list[dict] = []
+
+        self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(8)
+
+        header = QLabel(f"Input multipli - {step_label}")
+        header.setObjectName("label_section")
+        self._layout.addWidget(header)
+
+        add_row = QHBoxLayout()
+        self._version_combo = QComboBox()
+        self._btn_add_version = QPushButton("Aggiungi versione")
+        self._btn_add_version.setObjectName("btn_ghost")
+        self._btn_add_version.clicked.connect(self._add_selected_version)
+        self._btn_add_external = QPushButton("Aggiungi file .txt...")
+        self._btn_add_external.setObjectName("btn_ghost")
+        self._btn_add_external.clicked.connect(self._browse_external)
+        add_row.addWidget(self._version_combo, 1)
+        add_row.addWidget(self._btn_add_version)
+        add_row.addWidget(self._btn_add_external)
+        self._layout.addLayout(add_row)
+
+        self._list = QListWidget()
+        self._list.setMinimumHeight(96)
+        self._layout.addWidget(self._list)
+
+        order_row = QHBoxLayout()
+        self._btn_up = QPushButton("Su")
+        self._btn_down = QPushButton("Giu")
+        self._btn_remove = QPushButton("Rimuovi")
+        for btn in (self._btn_up, self._btn_down, self._btn_remove):
+            btn.setObjectName("btn_ghost")
+            order_row.addWidget(btn)
+        order_row.addStretch()
+        self._layout.addLayout(order_row)
+
+        self._btn_up.clicked.connect(lambda: self._move_current(-1))
+        self._btn_down.clicked.connect(lambda: self._move_current(1))
+        self._btn_remove.clicked.connect(self._remove_current)
+
+        self._placeholder = QLabel("Aggiungi una o piu trascrizioni .txt nell'ordine desiderato.")
+        self._placeholder.setObjectName("label_muted")
+        self._layout.addWidget(self._placeholder)
+
+        self._refresh_buttons()
+
+    def set_versions(self, versions: list[dict], selected_v: int | None):
+        self._versions = versions
+        self._version_combo.clear()
+        self.clear_inputs(emit=False)
+
+        for v in versions:
+            ts = v.get("ts", "")[:16].replace("T", " ")
+            label = f"v{v['v']}  -  {ts}"
+            self._version_combo.addItem(label, v)
+            if v["v"] == selected_v:
+                self._version_combo.setCurrentIndex(self._version_combo.count() - 1)
+
+        self._btn_add_version.setEnabled(bool(versions))
+        if versions and selected_v is not None:
+            self._add_version_by_number(selected_v, emit=False)
+        self._emit_inputs()
+        self._refresh_buttons()
+
+    def clear_inputs(self, emit: bool = True):
+        self._list.clear()
+        if emit:
+            self._emit_inputs()
+        self._refresh_buttons()
+
+    def inputs(self) -> list[dict]:
+        values = []
+        for i in range(self._list.count()):
+            item = self._list.item(i)
+            values.append(item.data(Qt.ItemDataRole.UserRole))
+        return values
+
+    def _add_selected_version(self):
+        idx = self._version_combo.currentIndex()
+        if idx < 0:
+            return
+        version = self._version_combo.itemData(idx)
+        self._add_version(version)
+
+    def _add_version_by_number(self, v_num: int, emit: bool = True):
+        for version in self._versions:
+            if version["v"] == v_num:
+                self._add_version(version, emit=emit)
+                return
+
+    def _add_version(self, version: dict, emit: bool = True):
+        record = {"type": "version", "v": version["v"], "file": version["file"]}
+        if self._has_record(record):
+            return
+        label = f"v{version['v']} - {version['file']}"
+        self._add_item(label, record, emit=emit)
+
+    def _browse_external(self):
+        paths, _ = QFileDialog.getOpenFileNames(
+            self, "Seleziona file di trascrizione", "", self._file_filter
+        )
+        for path in paths:
+            record = {"type": "external", "path": path}
+            if self._has_record(record):
+                continue
+            self._add_item(f"File - {Path(path).name}", record, emit=False)
+        self._emit_inputs()
+        self._refresh_buttons()
+
+    def _add_item(self, label: str, record: dict, emit: bool = True):
+        item = QListWidgetItem(label)
+        item.setData(Qt.ItemDataRole.UserRole, record)
+        self._list.addItem(item)
+        self._list.setCurrentItem(item)
+        if emit:
+            self._emit_inputs()
+        self._refresh_buttons()
+
+    def _has_record(self, record: dict) -> bool:
+        for existing in self.inputs():
+            if existing == record:
+                return True
+        return False
+
+    def _move_current(self, delta: int):
+        row = self._list.currentRow()
+        new_row = row + delta
+        if row < 0 or new_row < 0 or new_row >= self._list.count():
+            return
+        item = self._list.takeItem(row)
+        self._list.insertItem(new_row, item)
+        self._list.setCurrentRow(new_row)
+        self._emit_inputs()
+        self._refresh_buttons()
+
+    def _remove_current(self):
+        row = self._list.currentRow()
+        if row < 0:
+            return
+        item = self._list.takeItem(row)
+        del item
+        self._emit_inputs()
+        self._refresh_buttons()
+
+    def _emit_inputs(self):
+        self.inputs_changed.emit(self.inputs())
+
+    def _refresh_buttons(self):
+        has_items = self._list.count() > 0
+        self._placeholder.setVisible(not has_items)
+        self._btn_up.setEnabled(has_items)
+        self._btn_down.setEnabled(has_items)
+        self._btn_remove.setEnabled(has_items)
+
 
 class FileDropButton(QPushButton):
     """
