@@ -9,7 +9,7 @@ from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QColor
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QPlainTextEdit, QButtonGroup, QRadioButton, QSizePolicy,
-    QFileDialog, QFrame, QCheckBox,
+    QFileDialog, QFrame,
 )
 
 
@@ -53,8 +53,7 @@ class LogView(QPlainTextEdit):
 
 # ── VersionSelector ───────────────────────────────────────────────────── #
 
-class MultiFileSelector(QWidget):
-    files_selected = pyqtSignal(list)
+class VersionSelector(QWidget):
     """
     Mostra le versioni disponibili di uno step e permette di selezionarne una
     o usare un file esterno.
@@ -67,7 +66,6 @@ class MultiFileSelector(QWidget):
         super().__init__(parent)
         self._file_filter = file_filter
         self._group = QButtonGroup(self)
-        self._checkboxes = []
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(6)
@@ -97,34 +95,33 @@ class MultiFileSelector(QWidget):
         self._ext_btn.clicked.connect(self._browse_external)
         self._layout.addWidget(self._ext_btn)
 
-    def set_versions(self, versions: list[dict], selected_v: int | None, run_dir: Path | str, step_id: str):
+    def set_versions(self, versions: list[dict], selected_v: int | None):
         """Popola i radio button con le versioni fornite dal RunManager."""
         # Pulisci precedenti
         while self._versions_container.count():
             item = self._versions_container.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-        # Rimuovi vecchi checkbox dal gruppo
-        for cb in self._checkboxes:
-            if cb in self._group.buttons():
-                self._group.removeButton(cb)
-        self._checkboxes.clear()
+        # Rimuovi vecchi button dal gruppo
+        for btn in self._group.buttons():
+            if btn is not self._ext_radio:
+                self._group.removeButton(btn)
 
-        base_path = Path(run_dir)
         for v in versions:
             ts = v.get("ts", "")[:16].replace("T", " ")
             params = v.get("params", {})
             param_str = "  ·  ".join(f"{k}: {val}" for k, val in params.items())
             param_str = param_str.replace("cuda", "auto")
             label = f"v{v['v']}  ·  {ts}  ·  {param_str}"
-            cb = QCheckBox(label)
-            cb.setStyleSheet("color: #8fa882; font-size: 12px;")
-            cb.setProperty("file_path", str(base_path / step_id / f"output_v{v['v']}.txt"))
-            cb.stateChanged.connect(self._on_checkbox_state_changed)
-            self._versions_container.addWidget(cb)
-            self._checkboxes.append(cb)
+            rb = QRadioButton(label)
+            rb.setStyleSheet("color: #8fa882; font-size: 12px;")
+            self._group.addButton(rb, v["v"])
+            rb.toggled.connect(
+                lambda checked, vn=v["v"]: self.version_selected.emit(vn) if checked else None
+            )
+            self._versions_container.addWidget(rb)
             if v["v"] == selected_v:
-                cb.setChecked(True)
+                rb.setChecked(True)
 
         if not versions:
             placeholder = QLabel("Nessun output disponibile dallo step precedente")
@@ -137,21 +134,7 @@ class MultiFileSelector(QWidget):
         if not checked:
             self._ext_path_label.hide()
 
-    def _on_checkbox_state_changed(self):
-        selected = [cb.property("file_path") for cb in self._checkboxes if cb.isChecked()]
-        self.files_selected.emit(selected)
-        self._ext_btn.setVisible(checked)
-        if not checked:
-            self._ext_path_label.hide()
-
     def _browse_external(self):
-        # Emit the selected file path
-        path, _ = QFileDialog.getOpenFileName(self, "Seleziona file", "", self._file_filter)
-        if path:
-            self._ext_path_label.setText(Path(path).name)
-            self._ext_path_label.show()
-            self.external_file_selected.emit(path)
-
         path, _ = QFileDialog.getOpenFileName(self, "Seleziona file", "", self._file_filter)
         if path:
             self._ext_path_label.setText(Path(path).name)

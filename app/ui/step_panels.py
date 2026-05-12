@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 from app.core.run_manager import RunManager, STATUS_DONE, STATUS_IDLE, STATUS_RUNNING, STATUS_ERROR
 from app.core.runner import ScriptRunner
 from app.core import settings as app_settings
-from app.ui.widgets import LogView, MultiFileSelector, FileDropButton, StatusPill, make_separator, VersionSelector
+from app.ui.widgets import LogView, VersionSelector, FileDropButton, StatusPill, make_separator
 
 
 # ── Helper ────────────────────────────────────────────────────────────── #
@@ -347,8 +347,8 @@ class Step2Panel(QWidget):
         il.setSpacing(10)
 
         # Versioni step1
-        self._ver_selector = MultiFileSelector("trascrizione (step 1)", "Testo (*.txt)")
-        self._ver_selector.files_selected.connect(self._on_files_selected)
+        self._ver_selector = VersionSelector("trascrizione (step 1)", "Testo (*.txt)")
+        self._ver_selector.version_selected.connect(self._on_version_selected)
         self._ver_selector.external_file_selected.connect(self._on_external_txt)
         il.addWidget(self._ver_selector)
 
@@ -446,7 +446,6 @@ class Step2Panel(QWidget):
         root.addStretch()
 
         self._selected_input_path: str | None = None
-        self._selected_input_paths: list[str] = []
 
     def _on_mode_changed(self, generic_checked: bool):
         is_lecture = not generic_checked
@@ -461,13 +460,12 @@ class Step2Panel(QWidget):
         self._log.clear_log()
         versions = run.step_versions(self.PREV_STEP_ID)
         sel = run.step_data(self.PREV_STEP_ID)["selected_version"]
-        self._ver_selector.set_versions(versions, sel, self._run.run_dir, self.PREV_STEP_ID)
+        self._ver_selector.set_versions(versions, sel)
         if versions:
             sel_v = run.selected_version(self.PREV_STEP_ID)
             if sel_v:
                 p = run.run_dir / self.PREV_STEP_ID / sel_v["file"]
                 self._selected_input_path = str(p)
-                self._selected_input_paths = [str(p)]
         self._update_ollama_models()
 
     def _update_ollama_models(self):
@@ -475,19 +473,19 @@ class Step2Panel(QWidget):
             self._model_combo.clear()
             self._model_combo.addItems(self._ollama.all_models)
 
+    def _on_version_selected(self, v_num: int):
+        if self._run:
+            self._run.select_version(self.PREV_STEP_ID, v_num)
+            p = self._run.run_dir / self.PREV_STEP_ID / f"output_v{v_num}.txt"
+            self._selected_input_path = str(p)
 
     def _on_external_txt(self, path: str):
         self._selected_input_path = path
-        self._selected_input_paths = [path]
-
-    def _on_files_selected(self, paths: list[str]):
-        # Store all selected transcript paths
-        self._selected_input_paths = paths
 
     def _run_script(self):
         if not self._run:
             return
-        if not self._selected_input_paths or not self._selected_input_paths[0]:
+        if not self._selected_input_path:
             QMessageBox.warning(self, "Input mancante", "Seleziona un file di trascrizione.")
             return
 
@@ -522,7 +520,7 @@ class Step2Panel(QWidget):
 
         if not is_lecture:
             script = "summary.py"
-            args = ["-i", self._selected_input_paths[0], "-o", str(out_file), "-m", model,
+            args = ["-i", self._selected_input_path, "-o", str(out_file), "-m", model,
                     "-c", str(chunk)]
             if parts:
                 args.append("-p")
@@ -531,7 +529,7 @@ class Step2Panel(QWidget):
             script = "summarize_lecture.py"
             args = [self._pptx_btn.path]
             if not self._slides_only_check.isChecked():
-                args.extend(self._selected_input_paths)
+                args.append(self._selected_input_path)
             else:
                 args.append("--slides-only")
             args += ["-m", model, "-o", str(out_file)]
@@ -599,7 +597,6 @@ class Step3Panel(QWidget):
         self._pending_overwrite = None
         self._pending_outfile = ""
         self._selected_input_path: str | None = None
-        self._selected_input_paths: list[str] = []
         self._build_ui()
 
     def _build_ui(self):
@@ -618,7 +615,7 @@ class Step3Panel(QWidget):
         il = QVBoxLayout(input_card)
         self._ver_selector = VersionSelector("riassunto (step 2)", "Markdown (*.md)")
         self._ver_selector.version_selected.connect(self._on_version_selected)
-        self._ver_selector.external_file_selected.connect(self._on_external_txt)
+        self._ver_selector.external_file_selected.connect(lambda p: setattr(self, "_selected_input_path", p))
         il.addWidget(self._ver_selector)
         root.addWidget(input_card)
 
@@ -670,14 +667,18 @@ class Step3Panel(QWidget):
         self._log.clear_log()
         versions = run.step_versions(self.PREV_STEP_ID)
         sel = run.step_data(self.PREV_STEP_ID)["selected_version"]
-        self._ver_selector.set_versions(versions, sel, self._run.run_dir, self.PREV_STEP_ID)
+        self._ver_selector.set_versions(versions, sel)
         if versions:
             sel_v = run.selected_version(self.PREV_STEP_ID)
             if sel_v:
                 p = run.run_dir / self.PREV_STEP_ID / sel_v["file"]
                 self._selected_input_path = str(p)
-                self._selected_input_paths = [str(p)]
 
+    def _on_version_selected(self, v_num: int):
+        if self._run:
+            self._run.select_version(self.PREV_STEP_ID, v_num)
+            p = self._run.run_dir / self.PREV_STEP_ID / f"output_v{v_num}.md"
+            self._selected_input_path = str(p)
 
     def _run_script(self):
         if not self._run or not self._selected_input_path:
